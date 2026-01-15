@@ -20,7 +20,9 @@ builder.Services.AddDbContext<HotelDbContext>((sp, options) =>
     options.AddInterceptors(
         sp.GetRequiredService<ConcurrencyTokenInterceptor>());
 });
-builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 var app = builder.Build();

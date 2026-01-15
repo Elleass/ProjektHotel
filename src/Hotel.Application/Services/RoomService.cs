@@ -6,21 +6,29 @@ namespace Hotel.Application.Services;
 
 public class RoomService : IRoomService
 {
-    private readonly IRoomRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RoomService(IRoomRepository repository)
+    public RoomService(IUnitOfWork unitOfWork)
     {
-        _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task AddRoomAsync(CreateRoomDto dto)
     {
         var room = new Room(dto.RoomNumber, dto.Type, dto.Price);
-        await _repository.AddAsync(room);
+
+        await _unitOfWork.Rooms.AddAsync(room);
+        await _unitOfWork.SaveChangesAsync(); 
     }
 
     public async Task DeleteRoomAsync(int id)
     {
-        await _repository.DeleteAsync(id);
+        var room = await _unitOfWork.Rooms.GetByIdAsync(id);
+
+        if (room == null)
+            throw new KeyNotFoundException($"Room with ID {id} not found");
+
+        _unitOfWork.Rooms.Delete(room);
+        await _unitOfWork.SaveChangesAsync(); 
     }
 }
