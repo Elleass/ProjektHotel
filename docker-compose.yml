@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: hotel-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=StrongPassword123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlvolume:/var/opt/mssql
+
+  api:
+    image: hotel-api 
+    container_name: hotel-api
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=HotelDb;User Id=sa;Password=StrongPassword123!;TrustServerCertificate=True;
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - db
+
+volumes:
+  sqlvolume:
