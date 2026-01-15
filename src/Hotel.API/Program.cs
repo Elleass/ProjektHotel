@@ -16,7 +16,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRoomDto>(); // Skanuje assembly Application
-
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IReservationService, ReservationService>(); 
 
 builder.Services.AddScoped<ConcurrencyTokenInterceptor>();
 

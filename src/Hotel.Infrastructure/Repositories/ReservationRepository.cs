@@ -12,12 +12,21 @@ public class ReservationRepository : GenericRepository<Reservation>, IReservatio
     {
     }
 
+    // ========== NADPISZ GetByIdAsync z eager loading ==========
+    public new async Task<Reservation?> GetByIdAsync(int id)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(r => r.Guest)
+            .Include(r => r.Room)
+            .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
     public async Task<List<Reservation>> GetByRoomIdAsync(int roomId, DateRange dateRange)
     {
         if (!dateRange.IsValid())
             throw new ArgumentException("Invalid date range");
 
-        // AsNoTracking + eager loading Guest i Room
         return await _dbSet
             .AsNoTracking()
             .Include(r => r.Guest)
@@ -30,7 +39,6 @@ public class ReservationRepository : GenericRepository<Reservation>, IReservatio
 
     public async Task<List<Reservation>> GetByGuestIdAsync(int guestId)
     {
-        // AsNoTracking + eager loading
         return await _dbSet
             .AsNoTracking()
             .Include(r => r.Room)
