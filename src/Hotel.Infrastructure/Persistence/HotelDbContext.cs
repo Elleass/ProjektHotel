@@ -1,3 +1,4 @@
+using Hotel.Domain.Common;
 using Hotel.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,36 +10,29 @@ public class HotelDbContext : DbContext
     {
     }
 
-    public DbSet<Domain.Entities.Hotel> Hotels { get; set; }
+    public DbSet<Hotel.Domain.Entities.Hotel> Hotels { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Guest> Guests { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HotelDbContext).Assembly);
+        modelBuilder.Entity<Room>().HasQueryFilter(r => !r.IsDeleted);
+    }
 
-        // Konfiguracja precyzji dla cen (wymagane w EF Core dla typu decimal)
-        modelBuilder.Entity<Room>()
-            .Property(r => r.Price)
-            .HasColumnType("decimal(18,2)");
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+    {
+        var entries = ChangeTracker.Entries<ISoftDelete>()
+            .Where(e => e.State == EntityState.Deleted);
 
-        // Konfiguracja relacji (opcjonalna, EF domyśli się sam, ale warto być precyzyjnym)
-        modelBuilder.Entity<Reservation>()
-            .HasOne(r => r.Guest)
-            .WithMany()
-            .HasForeignKey(r => r.GuestId)
-            .OnDelete(DeleteBehavior.Restrict); // Nie chcemy kaskadowo usuwać gości przy usuwaniu rezerwacji
+        foreach (var entry in entries)
+        {
+            entry.State = EntityState.Modified;
+            entry.Entity.IsDeleted = true;
+            entry.Entity.DeletedAt = DateTime.UtcNow;
+        }
 
-        modelBuilder.Entity<Reservation>()
-            .HasOne(r => r.Room)
-            .WithMany()
-            .HasForeignKey(r => r.RoomId)
-            .OnDelete(DeleteBehavior.Restrict);
-            
-        // Seedowanie danych (opcjonalnie na start, żeby baza nie była pusta)
-        modelBuilder.Entity<Domain.Entities.Hotel>().HasData(
-            new Domain.Entities.Hotel("Grand Hotel", "Warsaw, Poland") { Id = 1 }
-        );
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

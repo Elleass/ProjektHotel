@@ -21,4 +21,11 @@ public class RoomsController : ControllerBase
         await _roomService.AddRoomAsync(dto);
         return Ok(new { message = "Room created successfully" });
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteRoom(int id)
+    {
+        await _roomService.DeleteRoomAsync(id);
+        return NoContent();
+    }
 }
