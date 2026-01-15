@@ -1,9 +1,11 @@
 using Hotel.Domain.Entities;
+using Hotel.Domain.ValueObjects;
 
 namespace Hotel.Domain.Repositories;
 
-public interface IRoomRepository
+public interface IRoomRepository : IGenericRepository<Room>
 {
-    Task AddAsync(Room room);
-    Task DeleteAsync(int id);
+    // Metoda biznesowa - zgodnie z wytycznymi z Rozdzia³u 7
+    Task<List<Room>> GetAvailableRoomsAsync(DateRange dateRange);
+    Task<Room?> GetByIdWithReservationsAsync(int id);
 }

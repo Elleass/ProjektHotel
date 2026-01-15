@@ -1,7 +1,7 @@
 using Hotel.Domain.Common;
 namespace Hotel.Domain.Entities;
 
-public class Room : ISoftDelete
+public class Room : BaseEntity, ISoftDelete
 {
     public int Id { get; private set; }
     public int RoomNumber { get; private set; }

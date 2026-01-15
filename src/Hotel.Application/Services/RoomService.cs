@@ -1,3 +1,4 @@
+using AutoMapper;
 using Hotel.Application.DTOs;
 using Hotel.Domain.Entities;
 using Hotel.Domain.Repositories;
@@ -6,21 +7,47 @@ namespace Hotel.Application.Services;
 
 public class RoomService : IRoomService
 {
-    private readonly IRoomRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public RoomService(IRoomRepository repository)
+    public RoomService(IUnitOfWork unitOfWork, IMapper mapper)
     {
-        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-    public async Task AddRoomAsync(CreateRoomDto dto)
+    public async Task<RoomResponseDto> AddRoomAsync(CreateRoomDto dto)
     {
-        var room = new Room(dto.RoomNumber, dto.Type, dto.Price);
-        await _repository.AddAsync(room);
+        // AutoMapper:   CreateRoomDto -> Room
+        var room = _mapper.Map<Room>(dto);
+
+        await _unitOfWork.Rooms.AddAsync(room);
+        await _unitOfWork.SaveChangesAsync();
+
+        // AutoMapper:  Room -> RoomResponseDto
+        return _mapper.Map<RoomResponseDto>(room);
     }
 
     public async Task DeleteRoomAsync(int id)
     {
-        await _repository.DeleteAsync(id);
+        var room = await _unitOfWork.Rooms.GetByIdAsync(id);
+
+        if (room == null)
+            throw new KeyNotFoundException($"Room with ID {id} not found");
+
+        _unitOfWork.Rooms.Delete(room);
+        await _unitOfWork.SaveChangesAsync(); // Soft delete
+    }
+
+    public async Task<RoomResponseDto?> GetRoomByIdAsync(int id)
+    {
+        var room = await _unitOfWork.Rooms.GetByIdAsync(id);
+        return room == null ? null : _mapper.Map<RoomResponseDto>(room);
+    }
+
+    public async Task<List<RoomResponseDto>> GetAllRoomsAsync()
+    {
+        var rooms = await _unitOfWork.Rooms.GetAllAsync();
+        return _mapper.Map<List<RoomResponseDto>>(rooms);
     }
 }
