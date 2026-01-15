@@ -1,32 +1,43 @@
 using Hotel.Domain.Entities;
 using Hotel.Domain.Repositories;
+using Hotel.Domain.ValueObjects;
 using Hotel.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hotel.Infrastructure.Repositories;
 
-public class RoomRepository : IRoomRepository
+public class RoomRepository : GenericRepository<Room>, IRoomRepository
 {
-    private readonly HotelDbContext _context;
-
-    public RoomRepository(HotelDbContext context)
+    public RoomRepository(HotelDbContext context) : base(context)
     {
-        _context = context;
     }
 
-    public async Task AddAsync(Room room)
+    // Metoda biznesowa - zgodnie z wytycznymi 7.2
+    public async Task<List<Room>> GetAvailableRoomsAsync(DateRange dateRange)
     {
-        await _context.Rooms.AddAsync(room);
-        await _context.SaveChangesAsync();
+        if (!dateRange.IsValid())
+            throw new ArgumentException("Invalid date range");
+
+        // Pobierz pokoje, które NIE maj¹ rezerwacji w podanym zakresie
+        var occupiedRoomIds = await _context.Reservations
+            .AsNoTracking()
+            .Where(r => r.StartDate < dateRange.EndDate && r.EndDate > dateRange.StartDate)
+            .Select(r => r.RoomId)
+            .ToListAsync();
+
+        // Zwróæ dostêpne pokoje (AsNoTracking + materialized list)
+        return await _dbSet
+            .AsNoTracking()
+            .Where(r => r.IsAvailable && !occupiedRoomIds.Contains(r.Id))
+            .ToListAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task<Room?> GetByIdWithReservationsAsync(int id)
     {
-        var entity = await _context.Rooms.FindAsync(id);
-        if (entity != null)
-        {
-            _context.Rooms.Remove(entity);
-            await _context.SaveChangesAsync();
-        }
+        // Include dla eager loading, ale wci¹¿ AsNoTracking
+        return await _dbSet
+            .AsNoTracking()
+            .Include(r => r.HotelId) // Jeœli potrzebujesz relacji
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
 }
