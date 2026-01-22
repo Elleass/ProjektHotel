@@ -3,7 +3,6 @@ namespace Hotel.Domain.Entities;
 
 public class Room : BaseEntity, ISoftDelete
 {
-    public int Id { get; private set; }
     public int RoomNumber { get; private set; }
     public string Type { get; private set; }
     public decimal Price { get; private set; }

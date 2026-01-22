@@ -6,6 +6,7 @@ using Hotel.Domain.Repositories;
 using Hotel.Infrastructure.Persistence;
 using Hotel.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Hotel.API.Middleware; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +16,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateRoomDto>(); // Skanuje assembly Application
-builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateRoomDto>();
+
 builder.Services.AddScoped<IReservationService, ReservationService>(); 
 
 builder.Services.AddScoped<ConcurrencyTokenInterceptor>();
@@ -37,6 +38,8 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
