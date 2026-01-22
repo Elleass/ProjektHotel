@@ -1,6 +1,7 @@
+using Hotel.Domain.Common;
 namespace Hotel.Domain.Entities;
 
-public class Reservation : BaseEntity
+public class Reservation : BaseEntity, ISoftDelete 
 {
     public int GuestId { get; private set; }
     public virtual Guest Guest { get; private set; } = null!;
@@ -11,6 +12,9 @@ public class Reservation : BaseEntity
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public DateTime CreatedAt { get; private set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
 
     public Reservation(int guestId, int roomId, DateTime startDate, DateTime endDate)
     {

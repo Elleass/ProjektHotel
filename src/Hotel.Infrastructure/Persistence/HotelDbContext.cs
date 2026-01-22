@@ -19,6 +19,7 @@ public class HotelDbContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HotelDbContext).Assembly);
         modelBuilder.Entity<Room>().HasQueryFilter(r => !r.IsDeleted);
+        modelBuilder.Entity<Reservation>().HasQueryFilter(r => !r.IsDeleted);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
