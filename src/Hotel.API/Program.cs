@@ -18,14 +18,17 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRoomDto>();
 
-builder.Services.AddScoped<IReservationService, ReservationService>(); 
-
 builder.Services.AddScoped<ConcurrencyTokenInterceptor>();
 
 builder.Services.AddDbContext<HotelDbContext>((sp, options) =>
 {
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null)
+        );
 
     options.AddInterceptors(
         sp.GetRequiredService<ConcurrencyTokenInterceptor>());
@@ -35,9 +38,25 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(Program).Assembly, typeof(CreateRoomDto).Assembly);
 
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IGuestRepository, GuestRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+
+
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IGuestService, GuestService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<HotelDbContext>();
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        context.Database.Migrate();
+    }
+}
 
 app.UseMiddleware<ExceptionMiddleware>();
 
