@@ -15,9 +15,6 @@ public class ReservationsController : ControllerBase
         _reservationService = reservationService;
     }
 
-    /// <summary>
-    /// Tworzy nową rezerwację
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<ReservationResponseDto>> CreateReservation(
         [FromBody] CreateReservationDto dto)
@@ -40,9 +37,6 @@ public class ReservationsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Pobiera rezerwację po ID
-    /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<ReservationResponseDto>> GetReservation(int id)
     {
@@ -54,9 +48,6 @@ public class ReservationsController : ControllerBase
         return Ok(reservation);
     }
 
-    /// <summary>
-    /// Pobiera rezerwacje dla danego gościa
-    /// </summary>
     [HttpGet("guest/{guestId}")]
     public async Task<ActionResult<List<ReservationResponseDto>>> GetReservationsByGuest(int guestId)
     {
@@ -64,9 +55,6 @@ public class ReservationsController : ControllerBase
         return Ok(reservations);
     }
 
-    /// <summary>
-    /// Anuluje rezerwację
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelReservation(int id)
     {
@@ -79,7 +67,7 @@ public class ReservationsController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
         }
